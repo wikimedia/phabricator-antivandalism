@@ -11,12 +11,16 @@ phutil_register_library_map(array(
   'class' => array(
     'AntiVandalismAction' => 'herald/AntiVandalismAction.php',
     'AntiVandalismFeedStory' => 'feed/AntiVandalismFeedStory.php',
+    'AntivandalismScoreWorkflow' => 'workflow/AntivandalismScoreWorkflow.php',
+    'AntivandalismWorkflow' => 'workflow/AntivandalismWorkflow.php',
     'PhabricatorAntiVandalismConfigOptions' => 'config/AntiVandalismConfigOptions.php',
   ),
   'function' => array(),
   'xmap' => array(
     'AntiVandalismAction' => 'HeraldAction',
     'AntiVandalismFeedStory' => 'PhabricatorFeedStory',
+    'AntivandalismScoreWorkflow' => 'AntivandalismWorkflow',
+    'AntivandalismWorkflow' => 'PhabricatorManagementWorkflow',
     'PhabricatorAntiVandalismConfigOptions' => 'PhabricatorApplicationConfigOptions',
   ),
 ));
