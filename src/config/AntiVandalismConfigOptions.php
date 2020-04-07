@@ -25,13 +25,16 @@ final class PhabricatorAntiVandalismConfigOptions
       $this->newOption('antivandalism.max-score', 'int', 75)
         ->setSummary(
           pht('The number of tasks a new user can edit before we react.')),
+
       $this->newOption('antivandalism.edit-period-hours', 'int', 2)
         ->setSummary(
           pht('The time period examined when scoring edits made by a user.')),
+
       $this->newOption('antivandalism.disable-vandals', 'bool', false)
         ->setSummary(
           pht('Disable the accounts of vandals when these limits are exceeded')
         ),
+
       $this->newOption(
         'antivandalism.transaction-scores',
         'wild',
@@ -65,6 +68,7 @@ final class PhabricatorAntiVandalismConfigOptions
         'To customize scores, provide a json-formatted map of transaction ' .
         'type keys with floating-point values. For most purposes, values ' .
         'should be between 0.0 and 1.0 for all transaction types.')),
+
       $this->newOption(
         'antivandalism.text-edit-scores',
         'wild',
@@ -81,21 +85,38 @@ final class PhabricatorAntiVandalismConfigOptions
           'lower than edits which remove or alter existing text. The base ' .
           'score for each field should represent its relative importance.'
         ),
+
       $this->newOption(
         'antivandalism.age-factor-multiplier',
         'int',
         1)
         ->setSummary(
-          'The multiplier applied to the age component of the score.'),
+          'The multiplier applied to the age component of the score.')
+        ->setDescription('Larger values inflate the overall score. '.
+          'This should be a value between 2 and 10.'),
+
       $this->newOption(
         'antivandalism.age-factor-decay',
-        'float',
-        2.0)
+        'text',
+        '1.2')
         ->setSummary(
           'The rate of decay applied to the age component of the score.')
         ->setDescription(
           'Larger values result in a faster decay which means that older ' .
-          'edits score lower')
+          'edits score lower.  Each edit is scored, then the score is multiplied '.
+          'by the age multiplier. The multiplier is calculated as follows: '.
+          'age_factor = multiplier * (age / age^decay). '.
+          'Age is how long ago the edit occurred, in seconds.'),
+
+        $this->newOption('antivandalism.short-text-penalty', 'int', 5)
+          ->setSummary(
+            'This constant is added to the score when an edit results in very '.
+            'short title or description.'),
+
+        $this->newOption('antivandalism.short-text-length', 'int', 10)
+            ->setSummary(
+              'Minimum length below which a penalty is applied. '.
+            'See also: antivandalism.short-text-penalty'),
       );
   }
 

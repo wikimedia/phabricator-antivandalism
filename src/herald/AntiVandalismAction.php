@@ -107,10 +107,22 @@
       $table = id(new ManiphestTransaction())->getTableName();
       $userPHID = $user->getPHID();
 
+      $userCreated = $user->getDateCreated();
+      $userModified = $user->getDateModified();
+
+      $userAccountAge = time() - $userCreated;
+      $userTimeSinceModified = time() - $userModified;
+
+
+      $userIsNew = $userAccountAge < (60*60*24*7); // 7 days
+
       // these transaction types include textual `old` and `new` values which
       // are scored based on how much the text is changed.
       $textEdits = PhabricatorEnv::getEnvConfig(
         'antivandalism.text-edit-scores');
+
+      $shortTextPenalty = PhabricatorEnv::getEnvConfig('antivandalism.short-text-penalty');
+      $shortTextLength = PhabricatorEnv::getEnvConfig('antivandalism.short-text-length');
 
       // scores given to various transaction types
       $trnsValues = PhabricatorEnv::getEnvConfig(
@@ -171,8 +183,10 @@
             $editScore = 0;
           } else if ($oldLen > 0 && $newLen == 0) {
             // edit removed all text, this is more likely to be vandalism
-            $editScore = 4 * $scoreConfig;
+            // apply double the shortTextPenalty in this case
+            $editScore = $scoreConfig + (2*$shortTextPenalty);
           } else {
+
             // Calculate a score based on how much the text changed
             // this naively uses only the length of the text for comparison.
 
@@ -181,6 +195,9 @@
             $editScore = 0.6 + ($scoreConfig * $editScale);
             $editScore = max($editScore, 0.5 * $scoreConfig);
             $editScore = min($editScore, 3 * $scoreConfig);
+            if ($newLen <= $shortTextLength && $oldLen > $shortTextLength) {
+              $editScore += $shortTextPenalty;
+            }
           }
         } else if (isset($trnsValues[$type])) {
           $editScore = $trnsValues[$type];
@@ -198,14 +215,17 @@
           // logfactor is y=$multiplier * (x/x ^ $power) where x is the age of the transaction
           // in seconds. This means that the scores decay rapidly at first,
           // then more gradually after a few seconds.
+          if ($age < 1) {
+            $age = 1; // don't consider ages < 1 because it inflates the score
+          }
           $age_multiplier = PhabricatorEnv::getEnvConfig(
             'antivandalism.age-factor-multiplier');
-          $age_decay = PhabricatorEnv::getEnvConfig(
+          $age_decay = (float) PhabricatorEnv::getEnvConfig(
             'antivandalism.age-factor-decay');
           $logfactor = $age_multiplier * ($age / pow($age, $age_decay));
-          // limit the multiplier range:  0.2 < $logfactor < 2
-          $logfactor = max($logfactor, 0.2);
-          $logfactor = min($logfactor, 2);
+          // limit the multiplier range:  0.1 < $logfactor < 5
+          $logfactor = max($logfactor, 0.1);
+          $logfactor = min($logfactor, 5);
           $scores[$obj][] = $logfactor * $editScore;
         }
       }
