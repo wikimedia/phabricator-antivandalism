@@ -97,7 +97,7 @@ final class PhabricatorAntiVandalismConfigOptions
 
       $this->newOption(
         'antivandalism.age-factor-decay',
-        'text',
+        'wild',
         '1.2')
         ->setSummary(
           'The rate of decay applied to the age component of the score.')
