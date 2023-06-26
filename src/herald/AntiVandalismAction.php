@@ -92,9 +92,54 @@
       }
     }
 
+    /**
+     * look up a project by name
+     * @param string $projectName
+     * @return PhabricatorProject|null
+     */
+    public static function getProjectByName($projectName, $viewer=null, $needMembers=false) {
+      if ($viewer === null) {
+        $viewer = PhabricatorUser::getOmnipotentUser();
+      }
+      if (!is_array($projectName)) {
+        $projectName = array($projectName);
+      }
+      $query = new PhabricatorProjectQuery();
+      $query->setViewer($viewer)
+                ->withNames($projectName)
+                ->needMembers($needMembers);
+      if (count($projectName) == 1) {
+        return $query->executeOne();
+      } else {
+        return $query->execute();
+      }
+    }
+
     private function isFriendlyUser(PhabricatorUser $user,
       ManiphestTask $task) {
-      return WMFSecurityPolicy::userCanLockTask($user, $task);
+      if (!$user->isLoggedIn()) {
+        return false;
+      }
+      $user_phid = $user->getPHID();
+      $author_phid = $task->getAuthorPHID();
+
+      $trusted_project_names = ["Trusted-Contributors", "WMF-NDA", "acl*sre-team", "acl*security"];
+      $projects = self::getProjectByName($trusted_project_names, $user, true);
+      if (count($projects) !== 4) {
+        phlog('Some project tags required by Antivandalism extension do not exist.');
+      }
+
+      foreach ($projects as $proj) {
+        try {
+          if ($proj instanceof PhabricatorProject &&
+              $proj->isUserMember($user_phid)) {
+            return true;
+          }
+        } catch(PhabricatorDataNotAttachedException $e) {
+          continue;
+        }
+      }
+      return false;
     }
 
     private function scoreTransactions(PhabricatorUser $user,
