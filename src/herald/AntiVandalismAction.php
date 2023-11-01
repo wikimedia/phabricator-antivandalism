@@ -40,6 +40,7 @@
       $actor = id(new PhabricatorPeopleQuery())
         ->setViewer(PhabricatorUser::getOmnipotentUser())
         ->withPHIDs(array($last_actor_row['authorPHID']))
+        ->withIsSystemAgent(false)
         ->executeOne();
       if (!$actor) {
         return;
