@@ -154,12 +154,7 @@
       $userPHID = $user->getPHID();
 
       $userCreated = $user->getDateCreated();
-      $userModified = $user->getDateModified();
-
       $userAccountAge = time() - $userCreated;
-      $userTimeSinceModified = time() - $userModified;
-
-
       $userIsNew = $userAccountAge < (60*60*24*7); // 7 days
 
       // these transaction types include textual `old` and `new` values which
@@ -257,7 +252,7 @@
         }
 
         if ($age > 0 && $editScore > 0) {
-          // This penalizes very rapid edits with a logrithmic decay over time.
+          // This penalizes very rapid edits with a logarithmic decay over time.
           // logfactor is y=$multiplier * (x/x ^ $power) where x is the age of the transaction
           // in seconds. This means that the scores decay rapidly at first,
           // then more gradually after a few seconds.
@@ -306,9 +301,17 @@
       //phlog('recent ratio:'.$recentEditRatio);
       $totalScore = $totalScore * $recentEditRatio;
       //phlog("antivandalism score: $totalScore");
+
+      // it's weekend
       if (date('N') >= 6) {
         $totalScore = 1.2 * $totalScore;
       }
+
+      // new account
+      if ($userIsNew) {
+        $totalScore = 3.6 * $totalScore;
+      }
+
       return $totalScore;
     }
 
