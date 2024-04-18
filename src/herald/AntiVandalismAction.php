@@ -309,7 +309,7 @@
 
       // new account
       if ($userIsNew) {
-        $totalScore = 3.6 * $totalScore;
+        $totalScore = 1.2 * $totalScore;
       }
 
       return $totalScore;
