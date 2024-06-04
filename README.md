@@ -18,7 +18,7 @@ configuration:
 * When all of these conditions are met:
   * `Always`
 * Take these actions every time this rule matches:
-  * `Disable vandal accounts.`
+  * `Scan for vandalism` (in dropdown) / `Disable vandal accounts.` (in overview)
 
 ## Extension configuration
 You should also visit the extension's configuration section in the phabricator config interface and tune the parameters which affect the behavior and allow you to tune the scoring algorithm. The tuning parameters are described briefly in the following sections.
