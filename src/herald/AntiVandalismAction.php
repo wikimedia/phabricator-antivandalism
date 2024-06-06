@@ -192,6 +192,7 @@
           AND id > %d',
           $table, $userPHID, $id_limit);
 
+      $id_limit = $latest_ts_id - 500000;
       $transactions = queryfx_all(
         $task->establishConnection('r'),
         'SELECT
@@ -202,9 +203,9 @@
           `oldValue`,
           `newValue`
         FROM %T
-        WHERE authorPHID = %s AND dateModified > %d
+        WHERE authorPHID = %s AND id > %d AND dateModified > %d
         ORDER BY dateModified ASC',
-        $table, $userPHID, $ts_start);
+        $table, $userPHID, $id_limit, $ts_start);
 
       if (!$transactions) {
         $transactions = array();
