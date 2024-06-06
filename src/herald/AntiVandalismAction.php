@@ -121,6 +121,9 @@
       if (!$user->isLoggedIn()) {
         return false;
       }
+      if ($user->getIsAdmin()) {
+        return true;
+      }
       $user_phid = $user->getPHID();
       $author_phid = $task->getAuthorPHID();
 
@@ -318,10 +321,6 @@
     private function quarantineUser(
       PhabricatorUser $user, $object, $score, $max_score) {
 
-      if ($user->getIsAdmin()) {
-        phlog('skip quarantine, user is an admin.');
-        return;
-      }
       // Log the user out of all their sessions
       $sessions = id(new PhabricatorAuthSessionQuery())
         ->setViewer($user)
