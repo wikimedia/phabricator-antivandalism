@@ -172,13 +172,25 @@
       $trnsValues = PhabricatorEnv::getEnvConfig(
       'antivandalism.transaction-scores');
 
+      // Get latest Maniphest transaction ID
+      $latest_transaction_id = queryfx_one(
+        $task->establishConnection('r'),
+        'SELECT
+          MAX(id) AS latestTransactionId
+          FROM    %T',
+          $table);
+      $latest_ts_id = (int)$latest_transaction_id['latestTransactionId'];
+
+      // Get number of user actions within last 2mio Maniphest transactions
+      $id_limit = $latest_ts_id - 2000000;
       $counts = queryfx_one(
         $task->establishConnection('r'),
         'SELECT
           COUNT(DISTINCT objectPHID) AS objectCount
           FROM    %T
-          WHERE   authorPHID = %s',
-          $table, $userPHID);
+          WHERE   authorPHID = %s
+          AND id > %d',
+          $table, $userPHID, $id_limit);
 
       $transactions = queryfx_all(
         $task->establishConnection('r'),
