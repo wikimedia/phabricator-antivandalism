@@ -267,14 +267,12 @@
           $editScore = 0.5;
         }
 
+        // Don't consider $age = 0 because it inflates the score.
         if ($age > 0 && $editScore > 0) {
           // This penalizes very rapid edits with a logarithmic decay over time.
           // logfactor is y=$multiplier * (x/x ^ $power) where x is the age of the transaction
           // in seconds. This means that the scores decay rapidly at first,
           // then more gradually after a few seconds.
-          if ($age < 1) {
-            $age = 1; // don't consider ages < 1 because it inflates the score
-          }
           $age_multiplier = PhabricatorEnv::getEnvConfig(
             'antivandalism.age-factor-multiplier');
           $age_decay = (float) PhabricatorEnv::getEnvConfig(
