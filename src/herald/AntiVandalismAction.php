@@ -125,7 +125,6 @@
         return true;
       }
       $user_phid = $user->getPHID();
-      $author_phid = $task->getAuthorPHID();
 
       $trusted_project_names = ["Trusted-Contributors", "WMF-NDA", "acl*sre-team", "acl*security"];
       $projects = self::getProjectByName($trusted_project_names, $user, true);
