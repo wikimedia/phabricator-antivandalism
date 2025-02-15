@@ -180,17 +180,6 @@
           $table);
       $latest_ts_id = (int)$latest_transaction_id['latestTransactionId'];
 
-      // Get number of user actions within last 2mio Maniphest transactions
-      $id_limit = $latest_ts_id - 2000000;
-      $counts = queryfx_one(
-        $task->establishConnection('r'),
-        'SELECT
-          COUNT(DISTINCT objectPHID) AS objectCount
-          FROM    %T
-          WHERE   authorPHID = %s
-          AND id > %d',
-          $table, $userPHID, $id_limit);
-
       $id_limit = $latest_ts_id - 500000;
       $transactions = queryfx_all(
         $task->establishConnection('r'),
@@ -284,9 +273,19 @@
         }
       }
 
+      // Number of user touched objects within last 2mio Maniphest transactions
+      $id_limit = $latest_ts_id - 2000000;
+      $longterm_count = queryfx_one(
+        $task->establishConnection('r'),
+        'SELECT
+          COUNT(DISTINCT objectPHID) AS objectCount
+          FROM    %T
+          WHERE   authorPHID = %s
+          AND id > %d',
+          $table, $userPHID, $id_limit);
 
       // To get recentEditRatio, Multiply the score by the ratio of recently
-      // edited objects divided by the total number of objects ever touched
+      // edited objects divided by the longterm number of objects touched
       // by this user.
       // This lowers the score for users with edit history that occured prior
       // to the current period defined by `antivandalism.edit-period-hours`
@@ -295,7 +294,7 @@
       $uniqueObjects = array_keys($scores);
       $objectCount = count($uniqueObjects);
       // Limit the multiplier to a range of 0.5 to 1.0
-      $totalObjectCount = max($counts['objectCount'], $objectCount);
+      $totalObjectCount = max($longterm_count['objectCount'], $objectCount);
       $recentEditRatio = max($objectCount / $totalObjectCount, 0.5);
 
       $objScore = array();
