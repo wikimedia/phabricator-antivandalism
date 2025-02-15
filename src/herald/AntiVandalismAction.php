@@ -24,7 +24,7 @@
     }
 
     public function applyEffect($object, HeraldEffect $effect) {
-      $max_score = PhabricatorEnv::getEnvConfig(
+      $config_max_score = PhabricatorEnv::getEnvConfig(
         'antivandalism.max-score');
       // This is super janky but we don't currently get a reliable acting user.
       $last_actor_row = queryfx_one(
@@ -47,15 +47,15 @@
       }
 
       if (!$this->isFriendlyUser($actor, $object)) {
-        $hours = PhabricatorEnv::getEnvConfig(
+        $config_edit_period_hours = PhabricatorEnv::getEnvConfig(
           'antivandalism.edit-period-hours');
 
-        $score = $this->scoreTransactions($actor, $object, $hours);
+        $score = $this->scoreTransactions($actor, $object, $config_edit_period_hours);
 
-        if ($score > $max_score) {
+        if ($score > $config_max_score) {
           phlog('User '.$actor->getPHID()
-            ." exceeded max score: $score > $max_score");
-          return $this->quarantineUser($actor, $object, $score, $max_score);
+            ." exceeded max score: $score > $config_max_score");
+          return $this->quarantineUser($actor, $object, $score, $config_max_score);
         }
       }
       $this->logEffect(self::DO_NOTHING);
@@ -146,11 +146,11 @@
     }
 
     private function scoreTransactions(PhabricatorUser $user,
-      ManiphestTask $task, $hours) {
+      ManiphestTask $task, $config_edit_period_hours) {
 
       $now = time();
       $seconds_per_hour = 60 * 60;
-      $ts_start = $now - ($seconds_per_hour * $hours);
+      $ts_start = $now - ($seconds_per_hour * $config_edit_period_hours);
 
       $table = id(new ManiphestTransaction())->getTableName();
       $userPHID = $user->getPHID();
@@ -161,14 +161,14 @@
 
       // these transaction types include textual `old` and `new` values which
       // are scored based on how much the text is changed.
-      $textEdits = PhabricatorEnv::getEnvConfig(
+      $config_text_edit_scores = PhabricatorEnv::getEnvConfig(
         'antivandalism.text-edit-scores');
 
-      $shortTextPenalty = PhabricatorEnv::getEnvConfig('antivandalism.short-text-penalty');
-      $shortTextLength = PhabricatorEnv::getEnvConfig('antivandalism.short-text-length');
+      $config_short_text_penalty = PhabricatorEnv::getEnvConfig('antivandalism.short-text-penalty');
+      $config_short_text_length = PhabricatorEnv::getEnvConfig('antivandalism.short-text-length');
 
       // scores given to various transaction types
-      $trnsValues = PhabricatorEnv::getEnvConfig(
+      $config_transaction_scores = PhabricatorEnv::getEnvConfig(
       'antivandalism.transaction-scores');
 
       // Get latest Maniphest transaction ID
@@ -215,12 +215,12 @@
           $scores[$obj] = array();
         }
 
-        // default score for any transaction not defined in either $textEdits
-        // or $trnsValues:
+        // default score for any transaction not defined in either $config_text_edit_scores
+        // or $config_transaction_scores:
         $editScore = 0.5;
 
-        if (isset($textEdits[$type])) {
-          $scoreConfig = $textEdits[$type];
+        if (isset($config_text_edit_scores[$type])) {
+          $scoreConfig = $config_text_edit_scores[$type];
           $oldLen = strlen($oldValue);
           $newLen = strlen($newValue);
           if ($wasBlank) {
@@ -229,7 +229,7 @@
           } else if ($oldLen > 0 && $newLen == 0) {
             // edit removed all text, this is more likely to be vandalism
             // apply double the shortTextPenalty in this case
-            $editScore = $scoreConfig + (2*$shortTextPenalty);
+            $editScore = $scoreConfig + (2*$config_short_text_penalty);
           } else {
 
             // Calculate a score based on how much the text changed
@@ -240,12 +240,12 @@
             $editScore = 0.6 + ($scoreConfig * $editScale);
             $editScore = max($editScore, 0.5 * $scoreConfig);
             $editScore = min($editScore, 3 * $scoreConfig);
-            if ($newLen <= $shortTextLength && $oldLen > $shortTextLength) {
-              $editScore += $shortTextPenalty;
+            if ($newLen <= $config_short_text_length && $oldLen > $config_short_text_length) {
+              $editScore += $config_short_text_penalty;
             }
           }
-        } else if (isset($trnsValues[$type])) {
-          $editScore = $trnsValues[$type];
+        } else if (isset($config_transaction_scores[$type])) {
+          $editScore = $config_transaction_scores[$type];
           if ($wasBlank) {
             $editScore = $editScore / 2;
           }
@@ -261,11 +261,11 @@
           // logfactor is y=$multiplier * (x/x ^ $power) where x is the age of the transaction
           // in seconds. This means that the scores decay rapidly at first,
           // then more gradually after a few seconds.
-          $age_multiplier = PhabricatorEnv::getEnvConfig(
+          $config_age_factor_multiplier = PhabricatorEnv::getEnvConfig(
             'antivandalism.age-factor-multiplier');
-          $age_decay = (float) PhabricatorEnv::getEnvConfig(
+          $config_age_factor_decay = (float) PhabricatorEnv::getEnvConfig(
             'antivandalism.age-factor-decay');
-          $logfactor = $age_multiplier * ($age / pow($age, $age_decay));
+          $logfactor = $config_age_factor_multiplier * ($age / pow($age, $config_age_factor_decay));
           // limit the multiplier range:  0.1 < $logfactor < 5
           $logfactor = max($logfactor, 0.1);
           $logfactor = min($logfactor, 5);
@@ -328,7 +328,7 @@
     }
 
     private function quarantineUser(
-      PhabricatorUser $user, $object, $score, $max_score) {
+      PhabricatorUser $user, $object, $score, $config_max_score) {
 
       // Log the user out of all their sessions
       $sessions = id(new PhabricatorAuthSessionQuery())
@@ -339,14 +339,14 @@
         $session->delete();
       }
 
-      $should_disable_vandals = PhabricatorEnv::getEnvConfig(
+      $config_disable_vandals = PhabricatorEnv::getEnvConfig(
         'antivandalism.disable-vandals');
 
-      $disable_threshold = $max_score * 1.5;
+      $disable_threshold = $config_max_score * 1.5;
 
-      if ($should_disable_vandals && $score < $disable_threshold) {
+      if ($config_disable_vandals && $score < $disable_threshold) {
         // only disable the account if score exceeds max by 1.5x
-        $should_disable_vandals = false;
+        $config_disable_vandals = false;
       }
 
       $story_data = array(
@@ -354,7 +354,7 @@
         'objectPHID' => $object->getPHID(),
       );
 
-      if ($should_disable_vandals) {
+      if ($config_disable_vandals) {
         // disable the user
         $user->setIsDisabled(true);
         $user->saveWithoutIndex();
