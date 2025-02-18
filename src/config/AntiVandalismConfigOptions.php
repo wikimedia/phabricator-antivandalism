@@ -56,22 +56,22 @@ final class PhabricatorAntiVandalismConfigOptions
           'core:subtype' => 0.0,
           'core:edit-policy' => 0.1,
           'core:view-policy' => 0.1,
+          )
         )
-      )
-      ->setSummary(pht('Adjust the base scores for each transaction type'))
-      ->setDescription(pht(
-        'For each action taken by a user, phabricator records one or more ' .
-        'transactions. The type of transaction reflects what action was ' .
-        'taken. When Antivandalism is responding to user activity, each ' .
-        'transaction is assigned a base score and the scores are then ' .
-        'added together and multiplied by a factor based on the frequency ' .
-        'of activity the user has generated. Faster editing produces a ' .
-        'larger multiplier. The final score is compared to the value in ' .
-        '**antivandalism.max-score**.  If the score is too high, then ' .
-        'the account is either logged out of all sessions or disabled. ' .
-        'To customize scores, provide a json-formatted map of transaction ' .
-        'type keys with floating-point values. For most purposes, values ' .
-        'should be between 0.0 and 1.0 for all transaction types.')),
+        ->setSummary(pht('Adjust the base scores for each transaction type'))
+        ->setDescription(pht(
+          'For each action taken by a user, phabricator records one or more ' .
+          'transactions. The type of transaction reflects what action was ' .
+          'taken. When Antivandalism is responding to user activity, each ' .
+          'transaction is assigned a base score and the scores are then ' .
+          'added together and multiplied by a factor based on the frequency ' .
+          'of activity the user has generated. Faster editing produces a ' .
+          'larger multiplier. The final score is compared to the value in ' .
+          '**antivandalism.max-score**.  If the score is too high, then ' .
+          'the account is either logged out of all sessions or disabled. ' .
+          'To customize scores, provide a json-formatted map of transaction ' .
+          'type keys with floating-point values. For most purposes, values ' .
+          'should be between 0.0 and 1.0 for all transaction types.')),
 
       $this->newOption(
         'antivandalism.text-edit-scores',
@@ -112,15 +112,15 @@ final class PhabricatorAntiVandalismConfigOptions
           'age_factor = multiplier * (age / age^decay). '.
           'Age is how long ago the edit occurred, in seconds.'),
 
-        $this->newOption('antivandalism.short-text-penalty', 'int', 5)
-          ->setSummary(
-            'This constant is added to the score when an edit results in very '.
-            'short title or description.'),
+      $this->newOption('antivandalism.short-text-penalty', 'int', 5)
+        ->setSummary(
+          'This constant is added to the score when an edit results in very '.
+          'short title or description.'),
 
-        $this->newOption('antivandalism.short-text-length', 'int', 10)
-            ->setSummary(
-              'Minimum length below which a penalty is applied. '.
-            'See also: antivandalism.short-text-penalty'),
+      $this->newOption('antivandalism.short-text-length', 'int', 10)
+        ->setSummary(
+          'Minimum length below which a penalty is applied. '.
+          'See also: antivandalism.short-text-penalty'),
       );
   }
 
