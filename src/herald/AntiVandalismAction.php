@@ -41,6 +41,7 @@
         ->setViewer(PhabricatorUser::getOmnipotentUser())
         ->withPHIDs(array($last_actor_row['authorPHID']))
         ->withIsSystemAgent(false)
+        ->withIsAdmin(false)
         ->executeOne();
       if (!$actor) {
         return;
@@ -120,9 +121,6 @@
       ManiphestTask $task) {
       if (!$user->isLoggedIn()) {
         return false;
-      }
-      if ($user->getIsAdmin()) {
-        return true;
       }
       $user_phid = $user->getPHID();
 
