@@ -176,7 +176,9 @@
           $table);
       $latest_ts_id = (int)$latest_transaction_id['latestTransactionId'];
 
-      $id_limit = $latest_ts_id - 500000;
+      // $id_limit resembles approx. last 3-4 weeks per DB growth in 02/2025,
+      // still way above the other limit parameter $ts_start based on hours.
+      $id_limit = $latest_ts_id - 100000;
       $transactions = queryfx_all(
         $task->establishConnection('r'),
         'SELECT
