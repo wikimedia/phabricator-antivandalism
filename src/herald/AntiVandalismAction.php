@@ -341,7 +341,7 @@
       $disable_threshold = $config_max_score * 1.5;
 
       if ($config_disable_vandals && $score < $disable_threshold) {
-        phlog('WMF-AVA: User '.$actor->getPHID()
+        phlog('WMF-AVA: User '.$user->getPHID()
           ." logged out as they exceeded max score: $score > $config_max_score");
         // only disable the account if score exceeds max by 1.5x
         $config_disable_vandals = false;
@@ -356,7 +356,7 @@
         // disable the user
         $user->setIsDisabled(true);
         $user->saveWithoutIndex();
-        phlog('WMF-AVA: User '.$actor->getPHID()
+        phlog('WMF-AVA: User '.$user->getPHID()
           ." disabled as they 1.5x exceeded max score: $score > $disable_threshold");
         $story_data['action'] = 'Account Disabled';
       } else {
