@@ -63,7 +63,7 @@ final class PhabricatorAntiVandalismConfigOptions
         'added together and multiplied by a factor based on the frequency ' .
         'of activity the user has generated. Faster editing produces a ' .
         'larger multiplier. The final score is compared to the value in ' .
-        '**antivandalism.max-score**.  If the score is too high, then' .
+        '**antivandalism.max-score**.  If the score is too high, then ' .
         'the account is either logged out of all sessions or disabled. ' .
         'To customize scores, provide a json-formatted map of transaction ' .
         'type keys with floating-point values. For most purposes, values ' .
