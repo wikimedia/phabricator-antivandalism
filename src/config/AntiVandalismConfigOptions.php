@@ -24,16 +24,20 @@ final class PhabricatorAntiVandalismConfigOptions
     return array(
       $this->newOption('antivandalism.max-score', 'int', 75)
         ->setSummary(
-          pht('The number of tasks a new user can edit before we react.')),
+          pht('Maximum score which a user is allowed to reach before they ' .
+          'get logged out.')
+          ),
 
       $this->newOption('antivandalism.edit-period-hours', 'int', 2)
         ->setSummary(
-          pht('The time period examined when scoring edits made by a user.')),
+          pht('The time period examined when scoring edits made by a user.')
+          ),
 
       $this->newOption('antivandalism.disable-vandals', 'bool', false)
         ->setSummary(
-          pht('Disable the accounts of vandals when these limits are exceeded')
-        ),
+          pht('Whether to disable a user account when they have reached the ' .
+          'antivandalism.max-score multiplied by a threshold in the codebase.')
+          ),
 
       $this->newOption(
         'antivandalism.transaction-scores',
