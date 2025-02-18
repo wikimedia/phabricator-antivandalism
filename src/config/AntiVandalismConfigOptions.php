@@ -25,16 +25,24 @@ final class PhabricatorAntiVandalismConfigOptions
       $this->newOption('antivandalism.max-score', 'int', 75)
         ->setSummary(
           pht('Maximum score which a user is allowed to reach before they ' .
+          'get logged out.'))
+        ->setDescription(
+          pht('Maximum score which a user is allowed to reach before they ' .
           'get logged out.')
           ),
 
       $this->newOption('antivandalism.edit-period-hours', 'int', 2)
         ->setSummary(
+          pht('The time period examined when scoring edits made by a user.'))
+        ->setDescription(
           pht('The time period examined when scoring edits made by a user.')
           ),
 
       $this->newOption('antivandalism.disable-vandals', 'bool', false)
         ->setSummary(
+          pht('Whether to disable a user account when they have reached the ' .
+          'antivandalism.max-score multiplied by a threshold in the codebase.'))
+        ->setDescription(
           pht('Whether to disable a user account when they have reached the ' .
           'antivandalism.max-score multiplied by a threshold in the codebase.')
           ),
@@ -115,10 +123,16 @@ final class PhabricatorAntiVandalismConfigOptions
       $this->newOption('antivandalism.short-text-penalty', 'int', 5)
         ->setSummary(pht(
           'This constant is added to the score when an edit results in very '.
+          'short title or description.'))
+        ->setDescription(pht(
+          'This constant is added to the score when an edit results in very '.
           'short title or description.')),
 
       $this->newOption('antivandalism.short-text-length', 'int', 10)
         ->setSummary(pht(
+          'Minimum length below which a penalty is applied. '.
+          'See also: antivandalism.short-text-penalty'))
+        ->setDescription(pht(
           'Minimum length below which a penalty is applied. '.
           'See also: antivandalism.short-text-penalty')),
       );
