@@ -54,8 +54,6 @@
         $score = $this->scoreTransactions($actor, $object, $config_edit_period_hours);
 
         if ($score > $config_max_score) {
-          phlog('User '.$actor->getPHID()
-            ." exceeded max score: $score > $config_max_score");
           return $this->quarantineUser($actor, $object, $score, $config_max_score);
         }
       }
@@ -127,7 +125,7 @@
       $trusted_project_names = ["Trusted-Contributors", "WMF-NDA", "acl*sre-team", "acl*security"];
       $projects = self::getProjectByName($trusted_project_names, $user, true);
       if (count($projects) !== 4) {
-        phlog('Some project tags required by Antivandalism extension do not exist.');
+        phlog('WMF-AVA: Some project tags required by Antivandalism extension do not exist.');
       }
 
       foreach ($projects as $proj) {
@@ -308,9 +306,9 @@
         }
         $totalScore += $objTotal;
       }
-      //phlog('recent ratio:'.$recentEditRatio);
+      //phlog('WMF-AVA: recent ratio:'.$recentEditRatio);
       $totalScore = $totalScore * $recentEditRatio;
-      //phlog("antivandalism score: $totalScore");
+      //phlog("WMF-AVA: antivandalism score: $totalScore");
 
       // it's weekend
       if (date('N') >= 6) {
@@ -343,6 +341,8 @@
       $disable_threshold = $config_max_score * 1.5;
 
       if ($config_disable_vandals && $score < $disable_threshold) {
+        phlog('WMF-AVA: User '.$actor->getPHID()
+          ." logged out as they exceeded max score: $score > $config_max_score");
         // only disable the account if score exceeds max by 1.5x
         $config_disable_vandals = false;
       }
@@ -356,6 +356,8 @@
         // disable the user
         $user->setIsDisabled(true);
         $user->saveWithoutIndex();
+        phlog('WMF-AVA: User '.$actor->getPHID()
+          ." disabled as they 1.5x exceeded max score: $score > $disable_threshold");
         $story_data['action'] = 'Account Disabled';
       } else {
         $story_data['action'] = 'Sessions Deleted';
