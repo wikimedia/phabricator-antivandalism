@@ -217,6 +217,7 @@
         // or $config_transaction_scores:
         $editScore = 0.5;
 
+        // Edit-score a change in a defined text field (e.g. title, desc):
         if (isset($config_text_edit_scores[$type])) {
           $scoreConfig = $config_text_edit_scores[$type];
           $oldLen = strlen($oldValue);
@@ -242,11 +243,13 @@
               $editScore += $config_short_text_penalty;
             }
           }
+        // Edit-score a change in a defined non-text field:
         } else if (isset($config_transaction_scores[$type])) {
           $editScore = $config_transaction_scores[$type];
           if ($old_value_blank_or_unchanged) {
             $editScore = $editScore / 2;
           }
+        // Edit-score a change in a non-defined field:
         } else if ($old_value_blank_or_unchanged) {
           $editScore = 0;
         } else {
