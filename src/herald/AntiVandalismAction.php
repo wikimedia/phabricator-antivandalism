@@ -206,8 +206,8 @@
         $newValue = $trns['newValue'];
         $age = ($now - $trnsDate);
 
-        $wasBlank = ($oldValue == null || $oldValue == '' || $oldValue == '[]'
-                    || $oldValue == $newValue);
+        $old_value_blank_or_unchanged = ($oldValue == null || $oldValue == ''
+          || $oldValue == '[]' || $oldValue == $newValue);
 
         if (!isset($scores[$obj])) {
           $scores[$obj] = array();
@@ -221,7 +221,7 @@
           $scoreConfig = $config_text_edit_scores[$type];
           $oldLen = strlen($oldValue);
           $newLen = strlen($newValue);
-          if ($wasBlank) {
+          if ($old_value_blank_or_unchanged) {
             // edit added text where there was none before, not likely to be vandalism
             $editScore = 0;
           } else if ($oldLen > 0 && $newLen == 0) {
@@ -244,10 +244,10 @@
           }
         } else if (isset($config_transaction_scores[$type])) {
           $editScore = $config_transaction_scores[$type];
-          if ($wasBlank) {
+          if ($old_value_blank_or_unchanged) {
             $editScore = $editScore / 2;
           }
-        } else if ($wasBlank) {
+        } else if ($old_value_blank_or_unchanged) {
           $editScore = 0;
         } else {
           $editScore = 0.5;
