@@ -251,6 +251,16 @@
           if ($type !== "core:customfield" && $old_value_blank_or_unchanged) {
             $transaction_score = $transaction_score / 2;
           }
+          // Transaction removed all subscribers
+          else if ($type == "core:subscribers" &&
+              $oldValue !== '[]' && $newValue === '[]') {
+            $transaction_score = $transaction_score + 5;
+          }
+          // Transaction removed all edges (e.g. projects)
+          else if ($type == "core:edge" &&
+              $oldValue !== '[]' && $newValue === '[]') {
+            $transaction_score = $transaction_score + 1;
+          }
         // Score a change in a non-defined field:
         } else if ($old_value_blank_or_unchanged) {
           $transaction_score = 0;
