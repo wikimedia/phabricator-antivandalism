@@ -215,20 +215,20 @@
 
         // default score for any transaction not defined in either $config_text_edit_scores
         // or $config_transaction_scores:
-        $editScore = 0.5;
+        $transaction_score = 0.5;
 
-        // Edit-score a change in a defined text field (e.g. title, desc):
+        // Score a change in a defined text field (e.g. title, desc):
         if (isset($config_text_edit_scores[$type])) {
           $scoreConfig = $config_text_edit_scores[$type];
           $oldLen = strlen($oldValue);
           $newLen = strlen($newValue);
           if ($old_value_blank_or_unchanged) {
             // edit added text where there was none before, not likely to be vandalism
-            $editScore = 0;
+            $transaction_score = 0;
           } else if ($oldLen > 0 && $newLen == 0) {
             // edit removed all text, this is more likely to be vandalism
             // apply double the shortTextPenalty in this case
-            $editScore = $scoreConfig + (2*$config_short_text_penalty);
+            $transaction_score = $scoreConfig + (2*$config_short_text_penalty);
           } else {
 
             // Calculate a score based on how much the text changed
@@ -236,28 +236,28 @@
 
             $diff = max($oldLen, $newLen) - min($oldLen, $newLen);
             $editScale = $diff / $oldLen;
-            $editScore = 0.6 + ($scoreConfig * $editScale);
-            $editScore = max($editScore, 0.5 * $scoreConfig);
-            $editScore = min($editScore, 3 * $scoreConfig);
+            $transaction_score = 0.6 + ($scoreConfig * $editScale);
+            $transaction_score = max($transaction_score, 0.5 * $scoreConfig);
+            $transaction_score = min($transaction_score, 3 * $scoreConfig);
             if ($newLen <= $config_short_text_length && $oldLen > $config_short_text_length) {
-              $editScore += $config_short_text_penalty;
+              $transaction_score += $config_short_text_penalty;
             }
           }
-        // Edit-score a change in a defined non-text field:
+        // Score a change in a defined non-text field:
         } else if (isset($config_transaction_scores[$type])) {
-          $editScore = $config_transaction_scores[$type];
+          $transaction_score = $config_transaction_scores[$type];
           if ($old_value_blank_or_unchanged) {
-            $editScore = $editScore / 2;
+            $transaction_score = $transaction_score / 2;
           }
-        // Edit-score a change in a non-defined field:
+        // Score a change in a non-defined field:
         } else if ($old_value_blank_or_unchanged) {
-          $editScore = 0;
+          $transaction_score = 0;
         } else {
-          $editScore = 0.5;
+          $transaction_score = 0.5;
         }
 
         // Don't consider $age = 0 because it inflates the score.
-        if ($age > 0 && $editScore > 0) {
+        if ($age > 0 && $transaction_score > 0) {
           // This penalizes very rapid edits with a logarithmic decay over time.
           // logfactor is y=$multiplier * (x/x ^ $power) where x is the age of the transaction
           // in seconds. This means that the scores decay rapidly at first,
@@ -270,7 +270,7 @@
           // limit the multiplier range:  0.1 < $logfactor < 5
           $logfactor = max($logfactor, 0.1);
           $logfactor = min($logfactor, 5);
-          $scores[$obj][] = $logfactor * $editScore;
+          $scores[$obj][] = $logfactor * $transaction_score;
         }
       }
 
