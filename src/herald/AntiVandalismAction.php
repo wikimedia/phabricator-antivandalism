@@ -154,6 +154,7 @@
       $userCreated = $user->getDateCreated();
       $userAccountAge = time() - $userCreated;
       $userIsNew = $userAccountAge < (60*60*24*7); // 7 days
+      $userIsBrandNew = $userAccountAge < (60*60*12); // 12 hours
 
       // these transaction types include textual `old` and `new` values which
       // are scored based on how much the text is changed.
@@ -332,7 +333,10 @@
       }
 
       // new account
-      if ($userIsNew) {
+      if ($userIsBrandNew) {
+        $totalScore = 2.5 * $totalScore;
+      }
+      else if ($userIsNew) {
         $totalScore = 1.2 * $totalScore;
       }
 
