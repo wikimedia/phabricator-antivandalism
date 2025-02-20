@@ -298,7 +298,6 @@
       $totalObjectCount = max($longterm_count['objectCount'], $objectCount);
       $recentEditRatio = max($objectCount / $totalObjectCount, 0.5);
 
-      $objScore = array();
       $totalScore = 0;
       foreach($scores as $obj=>$objScores) {
         if (count($objScores) > 0) {
