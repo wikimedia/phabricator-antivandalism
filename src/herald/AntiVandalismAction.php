@@ -246,7 +246,8 @@
         // Score a change in a defined non-text field:
         } else if (isset($config_transaction_scores[$type])) {
           $transaction_score = $config_transaction_scores[$type];
-          if ($old_value_blank_or_unchanged) {
+          // Some folks set random Due Dates thus exclude customfield type here
+          if ($type !== "core:customfield" && $old_value_blank_or_unchanged) {
             $transaction_score = $transaction_score / 2;
           }
         // Score a change in a non-defined field:
