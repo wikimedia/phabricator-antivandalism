@@ -42,6 +42,7 @@
         ->withPHIDs(array($last_actor_row['authorPHID']))
         ->withIsSystemAgent(false)
         ->withIsAdmin(false)
+        ->withIsDisabled(false)
         ->executeOne();
       if (!$actor) {
         return;
