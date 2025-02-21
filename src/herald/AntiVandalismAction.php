@@ -303,30 +303,6 @@
         }
       }
 
-      // Number of user touched objects within last 2mio Maniphest transactions
-      $id_limit = $latest_ts_id - 2000000;
-      $longterm_count = queryfx_one(
-        $task->establishConnection('r'),
-        'SELECT
-          COUNT(DISTINCT objectPHID) AS objectCount
-          FROM    %T
-          WHERE   authorPHID = %s
-          AND id > %d',
-          $table, $userPHID, $id_limit);
-
-      // To get recentEditRatio, Multiply the score by the ratio of recently
-      // edited objects divided by the longterm number of objects touched
-      // by this user.
-      // This lowers the score for users with edit history that occured prior
-      // to the current period defined by `antivandalism.edit-period-hours`
-      // So new users get scored higher than users who have a long history.
-
-      $uniqueObjects = array_keys($scores);
-      $objectCount = count($uniqueObjects);
-      // Limit the multiplier to a range of 0.5 to 1.0
-      $totalObjectCount = max($longterm_count['objectCount'], $objectCount);
-      $recentEditRatio = max($objectCount / $totalObjectCount, 0.5);
-
       $totalScore = 0;
       foreach($scores as $obj=>$objScores) {
         if (count($objScores) > 0) {
@@ -339,9 +315,30 @@
         }
         $totalScore += $objTotal;
       }
-      //phlog('WMF-AVA: recent ratio:'.$recentEditRatio);
+
+      // Number of user touched objects within last 2mio Maniphest transactions
+      $id_limit = $latest_ts_id - 2000000;
+      $longterm_count = queryfx_one(
+        $task->establishConnection('r'),
+        'SELECT
+          COUNT(DISTINCT objectPHID) AS objectCount
+          FROM    %T
+          WHERE   authorPHID = %s
+          AND id > %d',
+          $table, $userPHID, $id_limit);
+      // To get recentEditRatio, Multiply the score by the ratio of recently
+      // edited objects divided by the longterm number of objects touched
+      // by this user.
+      // This lowers the score for users with edit history that occured prior
+      // to the current period defined by `antivandalism.edit-period-hours`
+      // So new users get scored higher than users who have a long history.
+      $uniqueObjects = array_keys($scores);
+      $objectCount = count($uniqueObjects);
+      // Limit the multiplier to a range of 0.5 to 1.0
+      $totalObjectCount = max($longterm_count['objectCount'], $objectCount);
+      $recentEditRatio = max($objectCount / $totalObjectCount, 0.5);
+
       $totalScore = $totalScore * $recentEditRatio;
-      //phlog("WMF-AVA: antivandalism score: $totalScore");
 
       // it's weekend
       if (date('N') >= 6) {
