@@ -359,12 +359,12 @@
       $config_disable_vandals = PhabricatorEnv::getEnvConfig(
         'antivandalism.disable-vandals');
 
-      $disable_threshold = $config_max_score * 1.2;
+      $disable_threshold = $config_max_score * 1.4;
 
       if ($config_disable_vandals && $score < $disable_threshold) {
         phlog('WMF-AVA: User '.$user->getUsername()
           ." logged out as they exceeded max score: $score > $config_max_score");
-        // only disable the account if score exceeds max by 1.2x
+        // only disable the account if score exceeds max by 1.4x
         $config_disable_vandals = false;
       }
 
@@ -378,7 +378,7 @@
         $user->setIsDisabled(true);
         $user->saveWithoutIndex();
         phlog('WMF-AVA: User '.$user->getUsername()
-          ." disabled as they 1.2x exceeded max score: $score > $disable_threshold");
+          ." disabled as they 1.4x exceeded max score: $score > $disable_threshold");
         $story_data['action'] = 'Account Disabled';
       } else {
         $story_data['action'] = 'Sessions Deleted';
