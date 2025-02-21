@@ -123,9 +123,9 @@
       }
       $user_phid = $user->getPHID();
 
-      $trusted_project_names = ["Trusted-Contributors", "WMF-NDA", "acl*sre-team", "acl*security"];
+      $trusted_project_names = ["Trusted-Contributors", "WMF-NDA", "acl*sre-team", "acl*security", "acl*Batch-Editors", "acl*phabricator"];
       $projects = self::getProjectByName($trusted_project_names, $user, true);
-      if (count($projects) !== 4) {
+      if (count($projects) !== 6) {
         phlog('WMF-AVA: Some project tags required by Antivandalism extension do not exist.');
       }
 
