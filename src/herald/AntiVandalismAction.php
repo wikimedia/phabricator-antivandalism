@@ -253,15 +253,30 @@
           if ($type !== "core:customfield" && $old_value_blank_or_unchanged) {
             $transaction_score = $transaction_score / 2;
           }
-          // Transaction removed all subscribers
+          // Penalize harder on removing _all_ subscribers
           else if ($type == "core:subscribers" &&
               $oldValue !== '[]' && $newValue === '[]') {
-            $transaction_score = $transaction_score + 5;
+            $transaction_score = $transaction_score + 4;
           }
-          // Transaction removed all edges (e.g. projects)
+          // Transaction removed _all_ existing edges of some type
           else if ($type == "core:edge" &&
-              $oldValue !== '[]' && $newValue === '[]') {
-            $transaction_score = $transaction_score + 1;
+                   $oldValue !== '[]' && $newValue === '[]') {
+            // Penalize harder on removing _all_ project tags by number of tags
+            if (strpos($oldValue, 'PHID-PROJ-') !== false) {
+              // TODO: Use str_contains() instead of strpos() in PHP8.0
+              $removed_projs = substr_count($oldValue, "PHID-PROJ-");
+              if ($removed_projs > 1) {
+                $transaction_score = $transaction_score + $removed_projs;
+              }
+            }
+            // Penalize harder on removing _all_ parent/child tasks by number of tasks
+            if (strpos($oldValue, 'PHID-TASK-') !== false) {
+              // TODO: Use str_contains() instead of strpos() in PHP8.0
+              $removed_tasks = substr_count($oldValue, "PHID-TASK-");
+              if ($removed_tasks > 1) {
+                $transaction_score = $transaction_score + $removed_tasks;
+              }
+            }
           }
         // Score a change in a non-defined field:
         } else if ($old_value_blank_or_unchanged) {
