@@ -341,9 +341,9 @@
       $totalScore = $totalScore * $recentEditRatio;
 
       // it's weekend
-      if (date('N') >= 6) {
-        $totalScore = 1.2 * $totalScore;
-      }
+      // if (date('N') >= 6) {
+      //   $totalScore = 1.2 * $totalScore;
+      // }
 
       // new account
       if ($userIsBrandNew) {
