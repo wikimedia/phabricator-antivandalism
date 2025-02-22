@@ -35,7 +35,10 @@ final class PhabricatorAntiVandalismConfigOptions
         ->setSummary(
           pht('The time period examined when scoring edits made by a user.'))
         ->setDescription(
-          pht('The time period examined when scoring edits made by a user.')
+          pht('The time period examined when scoring edits made by a user, in ' .
+          'hours. Note that an extremely high value (several weeks) in a busy ' .
+          'Phabricator instance may not produce complete results due to the ' .
+          '$id_limit SQL query performance parameter in the source code.')
           ),
 
       $this->newOption('antivandalism.disable-vandals', 'bool', false)
