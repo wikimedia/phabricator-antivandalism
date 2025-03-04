@@ -322,29 +322,42 @@
         $totalScore += $objTotal;
       }
 
-      // Number of user touched objects within last 2mio Maniphest transactions
-      $id_limit = $latest_ts_id - 2000000;
-      $longterm_count = queryfx_one(
-        $task->establishConnection('r'),
-        'SELECT
-          COUNT(DISTINCT objectPHID) AS objectCount
-          FROM    %T
-          WHERE   authorPHID = %s
-          AND id > %d',
-          $table, $userPHID, $id_limit);
-      // To get recentEditRatio, Multiply the score by the ratio of recently
-      // edited objects divided by the longterm number of objects touched
-      // by this user.
+      // Number of different epochs within the max 150 feed stories of the
+      // user within the last six months
+      $now = time();
+      $epoch_one_week_ago = $now - (60 * 60 * 24 * 7);
+      $epoch_half_year_ago = $now - (60 * 60 * 24 * 183);
+      $query = id(new PhabricatorFeedQuery())
+               ->setViewer(PhabricatorUser::getOmnipotentUser())
+               ->withFilterPHIDs(array($userPHID))
+               ->withEpochInRange($epoch_half_year_ago, $epoch_one_week_ago)
+               ->setLimit(150)
+               ->setReturnPartialResultsOnOverheat(true);
+      $stories = $query->execute();
+      $story_epochs = [];
+      foreach ($stories as $story) {
+        $story_epochs[] = $story->getEpoch();
+      }
+      $unique_feed_epochs = sizeof(array_unique($story_epochs));
+      // To get $recent_ratio, Multiply the score by the ratio of recently
+      // edited objects by the user divided by the user's recent feed stories.
       // This lowers the score for users with edit history that occured prior
       // to the current period defined by `antivandalism.edit-period-hours`
-      // So new users get scored higher than users who have a long history.
-      $uniqueObjects = array_keys($scores);
-      $objectCount = count($uniqueObjects);
+      // So new users get scored higher than users who have some history.
+      $period_hours_unique_objects = array_keys($scores);
+      $period_hours_object_count = count($period_hours_unique_objects);
       // Limit the multiplier to a range of 0.5 to 1.0
-      $totalObjectCount = max($longterm_count['objectCount'], $objectCount);
-      $recentEditRatio = max($objectCount / $totalObjectCount, 0.5);
-
-      $totalScore = $totalScore * $recentEditRatio;
+      // Next line is old code - TODO: first should always be larger or equal?
+      // TODO: $unique_feed_epochs and $period_hours_object_count have overlap
+      // (dup values) if antivandalism.edit-period-hours was set to >= 168
+      $max_object_count = max(($unique_feed_epochs + $period_hours_object_count), $unique_feed_epochs);
+      // 0 should be impossible but let's play safe and don't divide by zero
+      if ($max_object_count > 0) {
+        $recent_ratio = max($period_hours_object_count / $max_object_count, 0.5);
+      } else {
+        $recent_ratio = 1;
+      }
+      $totalScore = $totalScore * $recent_ratio;
 
       // it's weekend
       // if (date('N') >= 6) {
