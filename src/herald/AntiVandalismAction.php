@@ -196,7 +196,8 @@
           `dateCreated`,
           `transactionType`,
           `oldValue`,
-          `newValue`
+          `newValue`,
+          `metadata`
         FROM %T
         WHERE authorPHID = %s AND id > %d AND dateModified > %d
         ORDER BY dateModified DESC',
@@ -258,6 +259,15 @@
           // Some folks set random Due Dates thus exclude customfield type here
           if ($type !== "core:customfield" && $old_value_blank_or_unchanged) {
             $transaction_score = $transaction_score / 2;
+          }
+          // Penalize hard on nonsensical large story point values
+          else if ($type === "core:customfield") {
+            $metadata_json = $trns['metadata'];
+            $metadata = json_decode($metadata_json, true);
+            if ($metadata['customfield:key'] === "std:maniphest:points.final"
+                && $newValue !== "null" && $newValue > 99) {
+              $transaction_score = $transaction_score + 15;
+            }
           }
           // Penalize harder on removing _all_ subscribers
           else if ($type == "core:subscribers" &&
