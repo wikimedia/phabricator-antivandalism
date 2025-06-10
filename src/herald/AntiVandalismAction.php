@@ -253,6 +253,10 @@
               $transaction_score += $config_short_text_penalty;
             }
           }
+          // Penalize on _creating_ tasks with short titles - T396471
+          if ($type === 'title' && $oldValue === '""' && strlen($newValue) < 10) {
+            $transaction_score = $transaction_score + 20;
+          }
         // Score a change in a defined non-text field:
         } else if (isset($config_transaction_scores[$type])) {
           $transaction_score = $config_transaction_scores[$type];
