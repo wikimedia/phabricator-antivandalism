@@ -159,7 +159,7 @@
       $userPHID = $user->getPHID();
 
       $userCreated = $user->getDateCreated();
-      $userAccountAge = time() - $userCreated;
+      $userAccountAge = $now - $userCreated;
       $userIsNew = $userAccountAge < (60*60*24*7); // 7 days
       $userIsBrandNew = $userAccountAge < (60*60*12); // 12 hours
 
@@ -338,7 +338,6 @@
 
       // Number of different epochs within the max 150 feed stories of the
       // user within the last six months
-      $now = time();
       $epoch_one_week_ago = $now - (60 * 60 * 24 * 7);
       $epoch_half_year_ago = $now - (60 * 60 * 24 * 183);
       $query = id(new PhabricatorFeedQuery())
