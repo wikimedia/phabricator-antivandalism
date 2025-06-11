@@ -260,11 +260,7 @@
         // Score a change in a defined non-text field:
         } else if (isset($config_transaction_scores[$type])) {
           $transaction_score = $config_transaction_scores[$type];
-          // Some folks set random Due Dates thus exclude customfield type here
-          if ($type !== "core:customfield" && $old_value_blank_or_unchanged) {
-            $transaction_score = $transaction_score / 2;
-          }
-          else if ($type === "core:customfield") {
+          if ($type === "core:customfield") {
             $metadata_json = $trns['metadata'];
             $metadata = json_decode($metadata_json, true);
             // Penalize hard on nonsensical large story point values
@@ -304,10 +300,12 @@
                 }
               }
             }
+            // linking a mock is very uncommon, hip kids are on Figma - T396609
+            else if (strpos($newValue, 'PHID-MOCK-') !== false) {
+              $transaction_score = $transaction_score + 12;
+            }
           }
         // Score a change in a non-defined field:
-        } else if ($old_value_blank_or_unchanged) {
-          $transaction_score = 0;
         } else {
           $transaction_score = 0.5;
         }
