@@ -272,6 +272,12 @@
                 && $newValue !== "null" && $newValue > 99) {
               $transaction_score = $transaction_score + 15;
             }
+            // Penalize on setting Due Date to default last midnight
+            if ($metadata['customfield:key'] === "std:maniphest:deadline.due"
+                && $newValue <= $now && $newValue >= $now - 86400
+                && $newValue % 86400 == 0) {
+              $transaction_score = $transaction_score + 8;
+            }
           }
           // Penalize harder on removing _all_ subscribers
           else if ($type == "core:subscribers" &&
