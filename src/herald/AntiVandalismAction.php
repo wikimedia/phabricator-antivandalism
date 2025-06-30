@@ -272,7 +272,7 @@
             if ($metadata['customfield:key'] === "std:maniphest:deadline.due"
                 && $newValue <= $now && $newValue >= $now - 86400
                 && $newValue % 86400 == 0) {
-              $transaction_score = $transaction_score + 8;
+              $transaction_score = $transaction_score + 25;
             }
           }
           // Penalize harder on removing _all_ subscribers
