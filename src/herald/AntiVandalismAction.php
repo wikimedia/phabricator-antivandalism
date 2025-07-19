@@ -55,7 +55,7 @@
         $score = $this->scoreTransactions($actor, $object, $config_edit_period_hours);
 
         // TODO: remove WMF temporary debugging (202502 changes)
-        if ($score > ($config_max_score - 12) && $score < $config_max_score) {
+        if ($score > ($config_max_score - 10) && $score < $config_max_score) {
           phlog('WMF-AVA DEBUG: User '.$actor->getUsername()
             ." close to logout score of $config_max_score: $score");
         }
