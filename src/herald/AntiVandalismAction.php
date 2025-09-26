@@ -278,7 +278,13 @@
           // Penalize harder on removing _all_ subscribers
           else if ($type == "core:subscribers" &&
               $oldValue !== '[]' && $newValue === '[]') {
-            $transaction_score = $transaction_score + 4;
+            if (strpos($oldValue, 'PHID-USER-') !== false) {
+              // TODO: Use str_contains() instead of strpos() in PHP8.0
+              $removed_subs = substr_count($oldValue, "PHID-USER-");
+              if ($removed_subs > 2) {
+                $transaction_score = $transaction_score + (pow($removed_subs, 2.2));
+              }
+            }
           }
           else if ($type == "core:edge") {
             // Transaction removed _all_ existing edges of some type
@@ -287,8 +293,8 @@
               if (strpos($oldValue, 'PHID-PROJ-') !== false) {
                 // TODO: Use str_contains() instead of strpos() in PHP8.0
                 $removed_projs = substr_count($oldValue, "PHID-PROJ-");
-                if ($removed_projs > 1) {
-                  $transaction_score = $transaction_score + $removed_projs;
+                if ($removed_projs > 2) {
+                  $transaction_score = $transaction_score + (pow($removed_projs, 2.2));
                 }
               }
               // Penalize harder on removing _all_ parent/child tasks by number of tasks
