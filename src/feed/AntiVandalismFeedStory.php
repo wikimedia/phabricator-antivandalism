@@ -39,7 +39,15 @@ final class AntiVandalismFeedStory
   }
 
   private function renderTitle() {
-    $action = pht($this->getValue('action'));
+    $action = $this->getValue('action');
+    switch($action) {
+      case 'Account Disabled':
+        $action = pht('Account Disabled');
+        break;
+      case 'Sessions Deleted':
+        $action = pht('Sessions Deleted');
+        break;
+    }
     $title = pht(
       '%s triggered vandalism countermeasures (%s) by editing %s.',
       $this->linkTo($this->getValue('vandalPHID')),
