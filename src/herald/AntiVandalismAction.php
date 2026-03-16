@@ -209,7 +209,7 @@
       $scores = array();
 
       foreach($transactions as $trns) {
-        $obj = $trns['objectPHID'];
+        $object_phid = $trns['objectPHID'];
         $type = $trns['transactionType'];
         $xaction_date = $trns['dateCreated'];
         $old_value = $trns['oldValue'];
@@ -219,8 +219,8 @@
         $old_value_blank_or_unchanged = ($old_value == null || $old_value == ''
           || $old_value == '[]' || $old_value == $new_value);
 
-        if (!isset($scores[$obj])) {
-          $scores[$obj] = array();
+        if (!isset($scores[$object_phid])) {
+          $scores[$object_phid] = array();
         }
 
         // default score for any transaction not defined in either $config_text_edit_scores
@@ -330,12 +330,12 @@
           // limit the multiplier range:  0.1 < $logfactor < 5
           $logfactor = max($logfactor, 0.1);
           $logfactor = min($logfactor, 5);
-          $scores[$obj][] = $logfactor * $transaction_score;
+          $scores[$object_phid][] = $logfactor * $transaction_score;
         }
       }
 
       $total_score = 0;
-      foreach($scores as $obj => $object_scores) {
+      foreach($scores as $object_phid => $object_scores) {
         if (count($object_scores) > 0) {
           $object_total = 0;
           foreach($object_scores as $score) {
