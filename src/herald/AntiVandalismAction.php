@@ -454,4 +454,23 @@
       //throw new Exception(pht('Vandalism detected: %s', $story_data['action']));
     }
 
+    /**
+     * This is expensive; do not use it unconditionally on every transaction
+     *
+     * @param string $user_phid
+     * @param string $object_phid
+     * @return bool
+     */
+    private function isUserAuthorOfObject($user_phid, $object_phid) {
+      $task = id(new ManiphestTaskQuery())
+        ->setViewer(PhabricatorUser::getOmnipotentUser())
+        ->withPHIDs(array($object_phid))
+        ->withAuthors(array($user_phid))
+        ->executeOne();
+      if ($task) {
+        return true;
+      }
+      return false;
+    }
+
   }
