@@ -285,7 +285,7 @@
               }
             }
           }
-          else if ($type == "status" &&
+          else if (($type == "status" || $type == "core:subtype") &&
                    !$this->isUserAuthorOfObject($user_phid, $object_phid)) {
             if ($user_is_brandnew) {
               $transaction_score = $transaction_score + 16;
