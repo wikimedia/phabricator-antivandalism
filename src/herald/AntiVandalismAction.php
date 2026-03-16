@@ -191,7 +191,6 @@
       $transactions = queryfx_all(
         $task->establishConnection('r'),
         'SELECT
-          `commentPHID`,
           `objectPHID`,
           `dateCreated`,
           `transactionType`,
