@@ -285,6 +285,14 @@
               }
             }
           }
+          else if ($type == "status" &&
+                   !$this->isUserAuthorOfObject($user_phid, $object_phid)) {
+            if ($user_is_brandnew) {
+              $transaction_score = $transaction_score + 16;
+            } else if ($user_is_new) {
+              $transaction_score = $transaction_score + 10;
+            }
+          }
           else if ($type == "core:edge") {
             // Transaction removed _all_ existing edges of some type
             if ($old_value !== '[]' && $new_value === '[]') {
@@ -413,7 +421,7 @@
       $config_disable_vandals = PhabricatorEnv::getEnvConfig(
         'antivandalism.disable-vandals');
 
-      $disable_threshold = $config_max_score * 1.4;
+      $disable_threshold = $config_max_score * 1.2;
 
       if ($config_disable_vandals && $score < $disable_threshold) {
         phlog('WMF-AVA: User '.$user->getUsername()
