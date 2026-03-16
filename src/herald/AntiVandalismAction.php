@@ -285,10 +285,10 @@
               }
             }
           }
-          else if (($type == "status" || $type == "core:subtype") &&
+          else if (($type == "status" || $type == "core:subtype") || $type == "priority") &&
                    !$this->isUserAuthorOfObject($user_phid, $object_phid)) {
             if ($user_is_brandnew) {
-              $transaction_score = $transaction_score + 16;
+              $transaction_score = $transaction_score + 15;
             } else if ($user_is_new) {
               $transaction_score = $transaction_score + 10;
             }
