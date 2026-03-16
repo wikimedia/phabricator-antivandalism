@@ -48,7 +48,7 @@
         return;
       }
 
-      if (!$this->isFriendlyUser($actor, $object)) {
+      if (!$this->isTrustedUser($actor, $object)) {
         $config_edit_period_hours = PhabricatorEnv::getEnvConfig(
           'antivandalism.edit-period-hours');
 
@@ -122,7 +122,7 @@
       }
     }
 
-    private function isFriendlyUser(PhabricatorUser $user,
+    private function isTrustedUser(PhabricatorUser $user,
       ManiphestTask $task) {
       if (!$user->isLoggedIn()) {
         return false;
@@ -156,12 +156,12 @@
       $ts_start = $now - ($seconds_per_hour * $config_edit_period_hours);
 
       $table = id(new ManiphestTransaction())->getTableName();
-      $userPHID = $user->getPHID();
+      $user_phid = $user->getPHID();
 
-      $userCreated = $user->getDateCreated();
-      $userAccountAge = $now - $userCreated;
-      $userIsNew = $userAccountAge < (60*60*24*7); // 7 days
-      $userIsBrandNew = $userAccountAge < (60*60*12); // 12 hours
+      $user_created = $user->getDateCreated();
+      $user_age = $now - $user_created;
+      $user_is_new = $user_age < (60*60*24*7); // 7 days
+      $user_is_brandnew = $user_age < (60*60*12); // 12 hours
 
       // these transaction types include textual `old` and `new` values which
       // are scored based on how much the text is changed.
@@ -201,7 +201,7 @@
         FROM %T
         WHERE authorPHID = %s AND id > %d AND dateModified > %d
         ORDER BY dateModified DESC',
-        $table, $userPHID, $id_limit, $ts_start);
+        $table, $user_phid, $id_limit, $ts_start);
 
       if (!$transactions) {
         $transactions = array();
@@ -211,13 +211,13 @@
       foreach($transactions as $trns) {
         $obj = $trns['objectPHID'];
         $type = $trns['transactionType'];
-        $trnsDate = $trns['dateCreated'];
-        $oldValue = $trns['oldValue'];
-        $newValue = $trns['newValue'];
-        $age = ($now - $trnsDate);
+        $xaction_date = $trns['dateCreated'];
+        $old_value = $trns['oldValue'];
+        $new_value = $trns['newValue'];
+        $xaction_age = ($now - $xaction_date);
 
-        $old_value_blank_or_unchanged = ($oldValue == null || $oldValue == ''
-          || $oldValue == '[]' || $oldValue == $newValue);
+        $old_value_blank_or_unchanged = ($old_value == null || $old_value == ''
+          || $old_value == '[]' || $old_value == $new_value);
 
         if (!isset($scores[$obj])) {
           $scores[$obj] = array();
@@ -229,32 +229,32 @@
 
         // Score a change in a defined text field (e.g. title, desc):
         if (isset($config_text_edit_scores[$type])) {
-          $scoreConfig = $config_text_edit_scores[$type];
-          $oldLen = strlen($oldValue);
-          $newLen = strlen($newValue);
+          $score_config = $config_text_edit_scores[$type];
+          $old_length = strlen($old_value);
+          $new_length = strlen($new_value);
           if ($old_value_blank_or_unchanged) {
             // edit added text where there was none before, not likely to be vandalism
             $transaction_score = 0;
-          } else if ($oldLen > 0 && $newLen == 0) {
+          } else if ($old_length > 0 && $new_length == 0) {
             // edit removed all text, this is more likely to be vandalism
             // apply double the shortTextPenalty in this case
-            $transaction_score = $scoreConfig + (2*$config_short_text_penalty);
+            $transaction_score = $score_config + (2*$config_short_text_penalty);
           } else {
 
             // Calculate a score based on how much the text changed
             // this naively uses only the length of the text for comparison.
 
-            $diff = max($oldLen, $newLen) - min($oldLen, $newLen);
-            $editScale = $diff / $oldLen;
-            $transaction_score = 0.6 + ($scoreConfig * $editScale);
-            $transaction_score = max($transaction_score, 0.5 * $scoreConfig);
-            $transaction_score = min($transaction_score, 3 * $scoreConfig);
-            if ($newLen <= $config_short_text_length && $oldLen > $config_short_text_length) {
+            $diff = max($old_length, $new_length) - min($old_length, $new_length);
+            $editScale = $diff / $old_length;
+            $transaction_score = 0.6 + ($score_config * $editScale);
+            $transaction_score = max($transaction_score, 0.5 * $score_config);
+            $transaction_score = min($transaction_score, 3 * $score_config);
+            if ($new_length <= $config_short_text_length && $old_length > $config_short_text_length) {
               $transaction_score += $config_short_text_penalty;
             }
           }
           // Penalize on _creating_ tasks with short titles - T396471
-          if ($type === 'title' && $oldValue === '""' && strlen($newValue) < 10) {
+          if ($type === 'title' && $old_value === '""' && strlen($new_value) < 10) {
             $transaction_score = $transaction_score + 20;
           }
         // Score a change in a defined non-text field:
@@ -265,22 +265,22 @@
             $metadata = json_decode($metadata_json, true);
             // Penalize hard on nonsensical large story point values
             if ($metadata['customfield:key'] === "std:maniphest:points.final"
-                && $newValue !== "null" && $newValue > 99) {
+                && $new_value !== "null" && $new_value > 99) {
               $transaction_score = $transaction_score + 15;
             }
             // Penalize on setting Due Date to default last midnight
             if ($metadata['customfield:key'] === "std:maniphest:deadline.due"
-                && $newValue <= $now && $newValue >= $now - 86400
-                && $newValue % 86400 == 0) {
+                && $new_value <= $now && $new_value >= $now - 86400
+                && $new_value % 86400 == 0) {
               $transaction_score = $transaction_score + 25;
             }
           }
           // Penalize harder on removing _all_ subscribers
           else if ($type == "core:subscribers" &&
-              $oldValue !== '[]' && $newValue === '[]') {
-            if (strpos($oldValue, 'PHID-USER-') !== false) {
+              $old_value !== '[]' && $new_value === '[]') {
+            if (strpos($old_value, 'PHID-USER-') !== false) {
               // TODO: Use str_contains() instead of strpos() in PHP8.0
-              $removed_subs = substr_count($oldValue, "PHID-USER-");
+              $removed_subs = substr_count($old_value, "PHID-USER-");
               if ($removed_subs > 2) {
                 $transaction_score = $transaction_score + (pow($removed_subs, 2.2));
               }
@@ -288,26 +288,26 @@
           }
           else if ($type == "core:edge") {
             // Transaction removed _all_ existing edges of some type
-            if ($oldValue !== '[]' && $newValue === '[]') {
+            if ($old_value !== '[]' && $new_value === '[]') {
               // Penalize harder on removing _all_ project tags by number of tags
-              if (strpos($oldValue, 'PHID-PROJ-') !== false) {
+              if (strpos($old_value, 'PHID-PROJ-') !== false) {
                 // TODO: Use str_contains() instead of strpos() in PHP8.0
-                $removed_projs = substr_count($oldValue, "PHID-PROJ-");
+                $removed_projs = substr_count($old_value, "PHID-PROJ-");
                 if ($removed_projs > 2) {
                   $transaction_score = $transaction_score + (pow($removed_projs, 2.2));
                 }
               }
               // Penalize harder on removing _all_ parent/child tasks by number of tasks
-              if (strpos($oldValue, 'PHID-TASK-') !== false) {
+              if (strpos($old_value, 'PHID-TASK-') !== false) {
                 // TODO: Use str_contains() instead of strpos() in PHP8.0
-                $removed_tasks = substr_count($oldValue, "PHID-TASK-");
+                $removed_tasks = substr_count($old_value, "PHID-TASK-");
                 if ($removed_tasks > 1) {
                   $transaction_score = $transaction_score + $removed_tasks;
                 }
               }
             }
             // linking a mock is very uncommon, hip kids are on Figma - T396609
-            else if (strpos($newValue, 'PHID-MOCK-') !== false) {
+            else if (strpos($new_value, 'PHID-MOCK-') !== false) {
               $transaction_score = $transaction_score + 12;
             }
           }
@@ -316,8 +316,8 @@
           $transaction_score = 0.5;
         }
 
-        // Don't consider $age = 0 because it inflates the score.
-        if ($age > 0 && $transaction_score > 0) {
+        // Don't consider $xaction_age = 0 because it inflates the score.
+        if ($xaction_age > 0 && $transaction_score > 0) {
           // This penalizes very rapid edits with a logarithmic decay over time.
           // logfactor is y=$multiplier * (x/x ^ $power) where x is the age of the transaction
           // in seconds. This means that the scores decay rapidly at first,
@@ -326,7 +326,7 @@
             'antivandalism.age-factor-multiplier');
           $config_age_factor_decay = (float) PhabricatorEnv::getEnvConfig(
             'antivandalism.age-factor-decay');
-          $logfactor = $config_age_factor_multiplier * ($age / pow($age, $config_age_factor_decay));
+          $logfactor = $config_age_factor_multiplier * ($xaction_age / pow($xaction_age, $config_age_factor_decay));
           // limit the multiplier range:  0.1 < $logfactor < 5
           $logfactor = max($logfactor, 0.1);
           $logfactor = min($logfactor, 5);
@@ -334,17 +334,17 @@
         }
       }
 
-      $totalScore = 0;
-      foreach($scores as $obj=>$objScores) {
-        if (count($objScores) > 0) {
-          $objTotal = 0;
-          foreach($objScores as $score) {
-            $objTotal += $score;
+      $total_score = 0;
+      foreach($scores as $obj => $object_scores) {
+        if (count($object_scores) > 0) {
+          $object_total = 0;
+          foreach($object_scores as $score) {
+            $object_total += $score;
           }
         } else {
-          $objTotal = 1;
+          $object_total = 1;
         }
-        $totalScore += $objTotal;
+        $total_score += $object_total;
       }
 
       // Number of different epochs within the max 150 feed stories of the
@@ -353,7 +353,7 @@
       $epoch_half_year_ago = $now - (60 * 60 * 24 * 183);
       $query = id(new PhabricatorFeedQuery())
                ->setViewer(PhabricatorUser::getOmnipotentUser())
-               ->withFilterPHIDs(array($userPHID))
+               ->withFilterPHIDs(array($user_phid))
                ->withEpochInRange($epoch_half_year_ago, $epoch_one_week_ago)
                ->setLimit(150)
                ->setReturnPartialResultsOnOverheat(true);
@@ -381,22 +381,22 @@
       } else {
         $recent_ratio = 1;
       }
-      $totalScore = $totalScore * $recent_ratio;
+      $total_score = $total_score * $recent_ratio;
 
       // it's weekend
       // if (date('N') >= 6) {
-      //   $totalScore = 1.2 * $totalScore;
+      //   $total_score = 1.2 * $total_score;
       // }
 
       // new account
-      if ($userIsBrandNew) {
-        $totalScore = 2.5 * $totalScore;
+      if ($user_is_brandnew) {
+        $total_score = 2.5 * $total_score;
       }
-      else if ($userIsNew) {
-        $totalScore = 1.2 * $totalScore;
+      else if ($user_is_new) {
+        $total_score = 1.2 * $total_score;
       }
 
-      return $totalScore;
+      return $total_score;
     }
 
     private function quarantineUser(
