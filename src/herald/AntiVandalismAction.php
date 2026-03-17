@@ -273,6 +273,12 @@
                 && $new_value % 86400 == 0) {
               $transaction_score = $transaction_score + 25;
             }
+            // Penalize new users on changing the Other Assignee field
+            // TODO Could probably also check if they set themselves here?
+            else if ($metadata['customfield:key'] === "std:maniphest:train.backup"
+                && ($user_is_brandnew || $user_is_new)) {
+              $transaction_score = $transaction_score + 15;
+            }
           }
           // Penalize harder on removing _all_ subscribers
           else if ($type == "core:subscribers" &&
