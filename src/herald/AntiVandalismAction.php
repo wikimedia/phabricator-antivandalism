@@ -186,7 +186,7 @@
 
       // $id_limit resembles approx. last 3-4 weeks per DB growth in 02/2025,
       // still way above the other limit parameter $ts_start based on hours.
-      $id_limit = $latest_ts_id - 100000;
+      $id_limit = $latest_ts_id - 70000;
       // Get recent transactions by user, sort by newest first
       $transactions = queryfx_all(
         $task->establishConnection('r'),
