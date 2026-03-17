@@ -296,6 +296,7 @@
               }
             }
           }
+          // TODO: Exclude setting priority if user is also the assignee?
           else if (($type == "status" || $type == "core:subtype") || $type == "priority") &&
                    !$this->isUserAuthorOfObject($user_phid, $object_phid)) {
             if ($user_is_brandnew) {
