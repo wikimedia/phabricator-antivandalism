@@ -305,7 +305,7 @@
                 }
               }
               // Penalize harder on removing _all_ parent/child tasks by number of tasks
-              if (strpos($old_value, 'PHID-TASK-') !== false) {
+              else if (strpos($old_value, 'PHID-TASK-') !== false) {
                 // TODO: Use str_contains() instead of strpos() in PHP8.0
                 $removed_tasks = substr_count($old_value, "PHID-TASK-");
                 if ($removed_tasks > 1) {
