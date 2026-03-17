@@ -268,7 +268,7 @@
               $transaction_score = $transaction_score + 15;
             }
             // Penalize on setting Due Date to default last midnight
-            if ($metadata['customfield:key'] === "std:maniphest:deadline.due"
+            else if ($metadata['customfield:key'] === "std:maniphest:deadline.due"
                 && $new_value <= $now && $new_value >= $now - 86400
                 && $new_value % 86400 == 0) {
               $transaction_score = $transaction_score + 25;
