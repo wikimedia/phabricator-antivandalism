@@ -286,6 +286,7 @@
             }
           }
           // Penalize harder on removing _all_ subscribers
+          // TODO: ...or set themselves
           else if ($type == "core:subscribers" &&
               $old_value !== '[]' && $new_value === '[]') {
             if (strpos($old_value, 'PHID-USER-') !== false) {
@@ -296,7 +297,7 @@
               }
             }
           }
-          // TODO: Exclude setting priority if user is also the assignee?
+          // TODO: Exclude setting priority if isUserAssigneeOfObject() is true?
           else if (($type == "status" || $type == "core:subtype" || $type == "priority") &&
                    !$this->isUserAuthorOfObject($user_phid, $object_phid)) {
             if ($user_is_brandnew) {
@@ -330,6 +331,8 @@
               $transaction_score = $transaction_score + 12;
             }
           }
+          // TODO: else if ($type == "reassign" && $old_value !== null && $user_is_brandnew) { ... }; but not setting b/c outreach
+
         // Score a change in a non-defined field:
         } else {
           $transaction_score = 0.5;
