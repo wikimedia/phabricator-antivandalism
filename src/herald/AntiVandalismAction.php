@@ -265,19 +265,24 @@
             // Penalize hard on nonsensical large story point values
             if ($metadata['customfield:key'] === "std:maniphest:points.final"
                 && $new_value !== "null" && $new_value > 99) {
-              $transaction_score = $transaction_score + 15;
+              $transaction_score = $transaction_score + 28;
             }
-            // Penalize on setting Due Date to default last midnight
-            else if ($metadata['customfield:key'] === "std:maniphest:deadline.due"
-                && $new_value <= $now && $new_value >= $now - 86400
-                && $new_value % 86400 == 0) {
-              $transaction_score = $transaction_score + 25;
+            else if ($metadata['customfield:key'] === "std:maniphest:deadline.due") {
+              // Penalize on setting Due Date to default last midnight
+              if ($new_value <= $now && $new_value >= $now - 86400 &&
+                  $new_value % 86400 == 0) {
+                $transaction_score = $transaction_score + 28;
+              }
+              // Penalize new users on setting Due Date
+              else if ($user_is_brandnew || $user_is_new) {
+                $transaction_score = $transaction_score + 15;
+              }
             }
             // Penalize new users on changing the Other Assignee field
             // TODO Could probably also check if they set themselves here?
             else if ($metadata['customfield:key'] === "std:maniphest:train.backup"
                 && ($user_is_brandnew || $user_is_new)) {
-              $transaction_score = $transaction_score + 15;
+              $transaction_score = $transaction_score + 20;
             }
           }
           // Penalize harder on removing _all_ subscribers
