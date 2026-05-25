@@ -441,7 +441,7 @@
       if ($config_disable_vandals && $score < $disable_threshold) {
         phlog('WMF-AVA: User '.$user->getUsername()
           ." logged out as they exceeded max score: $score > $config_max_score");
-        // only disable the account if score exceeds max by 1.4x
+        // only disable the account if score exceeds max by disable_threshold
         $config_disable_vandals = false;
       }
 
@@ -451,16 +451,42 @@
       );
 
       if ($config_disable_vandals) {
-        // disable the user
-        $user->setIsDisabled(true);
-        $user->saveWithoutIndex();
+        // Disable the user
+
+        $xactions = array();
+        $xactions[] = id(new PhabricatorUserTransaction())
+          ->setTransactionType(PhabricatorUserDisableTransaction::TRANSACTIONTYPE)
+          ->setNewValue(true);
+
+        // We must have a transaction actor. Set PhabBanBot which is not
+        // involved but comes closest - this is not exposed in the UI anyway.
+        $ban_actor = id(new PhabricatorPeopleQuery())
+          ->setViewer(PhabricatorUser::getOmnipotentUser())
+          ->withPHIDs(array('PHID-USER-i6a4slznksxyqnzo63fh'))
+          ->executeOne();
+
+        $herald_source = PhabricatorContentSource::newForSource(
+          PhabricatorHeraldContentSource::SOURCECONST);
+
+        // Display "Herald disabled this user" on the user account history feed
+        // feed under "Manage" as a hint what happened here.
+        id(new PhabricatorUserTransactionEditor())
+          ->setActor($ban_actor)
+          ->setActingAsPHID('PHID-APPS-PhabricatorHeraldApplication')
+          ->setContentSource($herald_source)
+          ->setContinueOnMissingFields(true)
+          ->setContinueOnNoEffect(true)
+          ->applyTransactions($user, $xactions);
+
         phlog('WMF-AVA: User '.$user->getUsername()
-          ." disabled as they 1.4x exceeded max score: $score > $disable_threshold");
+          ." disabled as they exceeded disable_threshold: $score > $disable_threshold");
+
         $story_data['action'] = 'Account Disabled';
       } else {
         $story_data['action'] = 'Sessions Deleted';
       }
 
+      // Create a custom entry about the AVA action in the Global Feed.
       $herald_phid = id(new PhabricatorHeraldApplication())->getPHID();
       $publisher = new PhabricatorFeedStoryPublisher();
       $publisher->setStoryType('AntiVandalismFeedStory')
