@@ -31,7 +31,7 @@ final class PhabricatorAntiVandalismConfigOptions
           'get logged out.')
           ),
 
-      $this->newOption('antivandalism.edit-period-hours', 'int', 2)
+      $this->newOption('antivandalism.edit-period-hours', 'int', 3)
         ->setSummary(
           pht('The time period examined when scoring edits made by a user.'))
         ->setDescription(
