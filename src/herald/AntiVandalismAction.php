@@ -101,7 +101,7 @@
 
     /**
      * look up a project by name
-     * @param string $projectName
+     * @param array<string>|string $projectName
      * @return PhabricatorProject|null
      */
     public static function getProjectByName($projectName, $viewer=null, $needMembers=false) {
