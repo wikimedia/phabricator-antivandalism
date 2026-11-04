@@ -19,6 +19,10 @@ final class PhabricatorAntiVandalismConfigOptions
     return 'apps';
   }
 
+  public function getApplicationClassName() {
+    return PhorgeExtensionsApplication::class;
+  }
+
   public function getOptions() {
 
     return array(
